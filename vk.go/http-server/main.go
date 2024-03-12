@@ -15,7 +15,15 @@ const keyServerAddress = "serverAddress"
 func getRoot(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	fmt.Printf("%s: Got / request\n", ctx.Value(keyServerAddress))
+	hasFirst := r.URL.Query().Has("first")
+	first := r.URL.Query().Get("first")
+	hasSecond := r.URL.Query().Has("second")
+	second := r.URL.Query().Get("second")
+
+	fmt.Printf("%s: got / request. first(%t)=%s, second(%t)=%s\n",
+		ctx.Value(keyServerAddress),
+		hasFirst, first,
+		hasSecond, second)
 	_, _ = io.WriteString(w, "Sex\n")
 }
 
@@ -31,41 +39,18 @@ func main() {
 	mux.HandleFunc("/", getRoot)
 	mux.HandleFunc("/hello", getHello)
 
-	ctx, cancelCtx := context.WithCancel(context.Background())
+	ctx := context.Background()
 	firstServer := &http.Server{Addr: ":3239", Handler: mux, BaseContext: func(l net.Listener) context.Context {
 		ctx = context.WithValue(ctx, keyServerAddress, l.Addr().String())
 		return ctx
 	}}
-	secondServer := &http.Server{Addr: ":6969", Handler: mux, BaseContext: func(l net.Listener) context.Context {
-		ctx = context.WithValue(ctx, keyServerAddress, l.Addr().String())
-		return ctx
-	}}
 
-	go func() {
-		err := firstServer.ListenAndServe()
+	err := firstServer.ListenAndServe()
 
-		if errors.Is(err, http.ErrServerClosed) {
-			fmt.Println("First server off")
-		} else if err != nil {
-			fmt.Printf("Error starting first server: %s\n", err)
-			os.Exit(1)
-		}
-
-		cancelCtx()
-	}()
-
-	go func() {
-		err := secondServer.ListenAndServe()
-
-		if errors.Is(err, http.ErrServerClosed) {
-			fmt.Println("Second server off")
-		} else if err != nil {
-			fmt.Printf("Error starting second server: %s\n", err)
-			os.Exit(1)
-		}
-
-		cancelCtx()
-	}()
-
-	<-ctx.Done()
+	if errors.Is(err, http.ErrServerClosed) {
+		fmt.Println("First server off")
+	} else if err != nil {
+		fmt.Printf("Error starting first server: %s\n", err)
+		os.Exit(1)
+	}
 }
