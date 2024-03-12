@@ -20,10 +20,15 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 	hasSecond := r.URL.Query().Has("second")
 	second := r.URL.Query().Get("second")
 
-	fmt.Printf("%s: got / request. first(%t)=%s, second(%t)=%s\n",
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		fmt.Printf("Couldn't read body: %s\n", err)
+	}
+
+	fmt.Printf("%s: got / request. first(%t)=%s, second(%t)=%s, body:\n%s\n",
 		ctx.Value(keyServerAddress),
 		hasFirst, first,
-		hasSecond, second)
+		hasSecond, second, body)
 	_, _ = io.WriteString(w, "Sex\n")
 }
 
