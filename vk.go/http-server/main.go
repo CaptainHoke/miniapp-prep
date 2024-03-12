@@ -35,8 +35,13 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 func getHello(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	username := r.PostFormValue("username")
+	if username == "" {
+		username = "Floppa"
+	}
+
 	fmt.Printf("%s: Got /hello request\n", ctx.Value(keyServerAddress))
-	_, _ = io.WriteString(w, "I stole this code\n")
+	_, _ = io.WriteString(w, fmt.Sprintf("Ohayo, %s!\n", username))
 }
 
 func main() {
