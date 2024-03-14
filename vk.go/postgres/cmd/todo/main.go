@@ -60,11 +60,22 @@ func readHandler(ctx *fiber.Ctx, conn *pgx.Conn) error {
 }
 
 func updateHandler(ctx *fiber.Ctx, conn *pgx.Conn) error {
-	return ctx.SendString("Update")
+	oldItem := ctx.Query("olditem")
+	newItem := ctx.Query("newitem")
+	_, err := conn.Exec(context.Background(), `UPDATE items SET item=$1 WHERE item=$2`, newItem, oldItem)
+	if err != nil {
+		log.Println("Failed to update item")
+	}
+	return ctx.Redirect("/")
 }
 
 func deleteHandler(ctx *fiber.Ctx, conn *pgx.Conn) error {
-	return ctx.SendString("Delete")
+	itemToDelete := ctx.Query("item")
+	_, err := conn.Exec(context.Background(), `DELETE FROM items WHERE item=$1`, itemToDelete)
+	if err != nil {
+		log.Println("Failed to delete item")
+	}
+	return ctx.SendString("Deleted")
 }
 
 func main() {
@@ -88,7 +99,7 @@ func main() {
 	app.Post("/", func(c *fiber.Ctx) error {
 		return createHandler(c, conn)
 	})
-	app.Put("/update", func(c *fiber.Ctx) error {
+	app.Patch("/update", func(c *fiber.Ctx) error {
 		return updateHandler(c, conn)
 	})
 	app.Delete("/delete", func(c *fiber.Ctx) error {
