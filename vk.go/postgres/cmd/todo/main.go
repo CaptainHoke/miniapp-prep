@@ -12,12 +12,28 @@ import (
 	_ "github.com/jackc/pgx/v5"
 )
 
-type Todo struct {
+type todo struct {
 	Item string
 }
 
 func createHandler(ctx *fiber.Ctx, conn *pgx.Conn) error {
-	return ctx.SendString("Create")
+	newItem := todo{}
+
+	if err := ctx.BodyParser(&newItem); err != nil {
+		log.Printf("Error: %v\n", err)
+		return ctx.SendString(err.Error())
+	}
+
+	log.Printf("Adding new item: %v", newItem)
+
+	if newItem.Item != "" {
+		_, err := conn.Exec(context.Background(), `INSERT INTO items VALUES ($1)`, newItem.Item)
+		if err != nil {
+			log.Fatalln("Failed to insert new item")
+		}
+	}
+
+	return ctx.Redirect("/")
 }
 
 func readHandler(ctx *fiber.Ctx, conn *pgx.Conn) error {
@@ -65,8 +81,6 @@ func main() {
 
 	engine := html.New("./views", ".html")
 	app := fiber.New(fiber.Config{Views: engine})
-
-	// TODO: config
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return readHandler(c, conn)
