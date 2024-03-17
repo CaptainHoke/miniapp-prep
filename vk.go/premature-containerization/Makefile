@@ -1,16 +1,21 @@
 all: rebuild
-.PHONY: clean build rebuild test run
+test: lint run-tests
 
+.PHONY: clean
 clean:
 	rm -rf ./bin
 
+.PHONY: build
 build:
 	docker build --target bin --output bin/ .
 
+.PHONY: rebuild
 rebuild: clean build
 
-test:
+.PHONY: run-tests
+run-tests:
 	docker build --target test .
 
-run:
-	./bin/example $(args)
+.PHONY: lint
+lint:
+	docker build --target lint .
