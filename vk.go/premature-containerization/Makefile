@@ -8,3 +8,6 @@ build:
 	docker build --target bin --output bin/ .
 
 rebuild: clean build
+
+run:
+	./bin/example $(args)
