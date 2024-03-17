@@ -7,4 +7,4 @@ clean:
 build:
 	docker build --target bin --output bin/ .
 
-
+rebuild: clean build
